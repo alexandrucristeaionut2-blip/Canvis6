@@ -6,6 +6,9 @@ import { isAdminRequest } from "@/lib/admin-session";
 import { ItemStatusSchema } from "@/lib/item-status";
 import { computeOrderStatusFromItems } from "@/lib/order-aggregate";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const bodySchema = z.object({
   status: ItemStatusSchema,
   trackingNumber: z.string().max(80).optional().nullable(),
@@ -15,6 +18,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ public
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { publicId, itemPublicId } = await params;
+
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json({ error: "DATABASE_URL missing" }, { status: 500 });
+  }
+
+  if (!publicId || !itemPublicId) {
+    return NextResponse.json({ error: "Missing params" }, { status: 400 });
+  }
 
   const order = await prisma.order.findUnique({ where: { publicId }, select: { id: true } });
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
