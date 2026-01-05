@@ -1,27 +1,13 @@
 import { SiteShell } from "@/components/site-shell";
 import { MotionSection } from "@/components/motion-section";
 import { GalleryGrid } from "@/components/gallery-grid";
-import { prisma } from "@/lib/prisma";
+import { GALLERY_ITEMS } from "@/data/gallery";
 
 export const metadata = {
   title: "Gallery — Canvist",
 };
 
 export default async function GalleryPage() {
-  const items = await prisma.galleryItem.findMany({
-    orderBy: [{ theme: { slug: "asc" } }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      imagePath: true,
-      mockupImage: true,
-      title: true,
-      size: true,
-      frameColor: true,
-      frameModel: true,
-      theme: { select: { slug: true, name: true } },
-    },
-  });
-
   return (
     <SiteShell>
       <div className="container py-10 md:py-14">
@@ -36,7 +22,7 @@ export default async function GalleryPage() {
 
         <MotionSection>
           <div className="mt-10">
-            <GalleryGrid items={items} />
+            <GalleryGrid items={GALLERY_ITEMS} />
           </div>
         </MotionSection>
       </div>
