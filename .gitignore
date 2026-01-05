@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# local uploads (stored on disk only)
+/uploads/*
+!/uploads/.gitkeep
+
 # production
 /build
 

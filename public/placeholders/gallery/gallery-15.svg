@@ -1,0 +1,14 @@
+﻿<svg xmlns='http://www.w3.org/2000/svg' width='1400' height='900' viewBox='0 0 1400 900'>
+  <defs>
+    <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='#F7F5F0'/>
+      <stop offset='1' stop-color='#E9E3D6'/>
+    </linearGradient>
+  </defs>
+  <rect width='1400' height='900' fill='url(#g)'/>
+  <rect x='120' y='120' width='1160' height='660' rx='40' fill='#FFFFFF' opacity='0.85'/>
+  <path d='M180 720 C 360 560, 520 760, 700 610 C 900 460, 1040 660, 1220 520' fill='none' stroke='#B08D57' stroke-width='6' opacity='0.55'/>
+  <text x='170' y='220' font-family='Georgia, serif' font-size='54' fill='#111111'>Canvist Gallery Placeholder</text>
+  <text x='170' y='285' font-family='Inter, system-ui, sans-serif' font-size='28' fill='#3A3A3A'>Example #15</text>
+  <text x='170' y='760' font-family='Inter, system-ui, sans-serif' font-size='22' fill='#6A6A6A'>Local MVP  Replace with real mockups anytime</text>
+</svg>
