@@ -32,7 +32,7 @@ test("wizard can upload photos", async ({ page }) => {
   expect(uploadResp.ok(), `upload failed: status=${status} body=${bodyText}`).toBeTruthy();
 
   // Toast is via Sonner; role is not guaranteed, so check for the message.
-  await expect(page.getByText("Photos uploaded (local)")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Photos uploaded")).toBeVisible({ timeout: 15_000 });
 
   // The list should render the uploaded items.
   await expect(page.getByText("good-photo-1.png")).toBeVisible({ timeout: 15_000 });

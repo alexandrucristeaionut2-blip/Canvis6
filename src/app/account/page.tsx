@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Account — Canvist" };
 
 export default async function AccountPage() {

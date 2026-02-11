@@ -5,6 +5,8 @@ import { parseTags } from "@/lib/theme";
 import { SiteShell } from "@/components/site-shell";
 import { CreateWizard } from "@/components/create-wizard";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Create — Canvist",
 };

@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { normalizeEmail } from "@/lib/auth/normalize";
 
 const schema = z.object({ email: z.string().email().max(120) });
 
@@ -13,7 +14,7 @@ function randomToken() {
 }
 
 export async function forgotPasswordAction(_: State, formData: FormData): Promise<State> {
-  const email = String(formData.get("email") ?? "").toLowerCase().trim();
+  const email = normalizeEmail(String(formData.get("email") ?? ""));
   const parsed = schema.safeParse({ email });
   if (!parsed.success) return { error: "Please enter a valid email." };
 

@@ -15,7 +15,7 @@ async function completeWizardToCart(page: import("@playwright/test").Page, size:
   await chooser.setFiles([file1, file2]);
 
   // Wait on UI state instead of network predicates (more stable in dev-server mode).
-  await expect(page.getByText("Photos uploaded (local)")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Photos uploaded")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("good-photo-1.png")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("good-photo-2.png")).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("wizard-next").click();

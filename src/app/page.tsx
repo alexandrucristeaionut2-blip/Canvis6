@@ -12,12 +12,46 @@ import { parseTags } from "@/lib/theme";
 import { SIZE_OPTIONS } from "@/lib/product";
 import { formatMoneyRonBani } from "@/lib/currency";
 
-export default async function Home() {
-  const themes = await prisma.theme.findMany({
-    orderBy: { createdAt: "asc" },
-    select: { slug: true, name: true, description: true, tags: true, heroImage: true, mockupImage: true },
-  });
+export const dynamic = "force-dynamic";
 
+export default async function Home() {
+  let themes: Array<{
+    slug: string;
+    name: string;
+    description: string;
+    tags: string;
+    heroImage: string | null;
+    mockupImage: string;
+  }> = [];
+
+  try {
+    themes = await prisma.theme.findMany({
+      orderBy: { createdAt: "asc" },
+      select: { slug: true, name: true, description: true, tags: true, heroImage: true, mockupImage: true },
+    });
+  } catch {
+    return (
+      <SiteShell>
+        <div className="container py-10 md:py-14">
+          <MotionSection>
+            <Card className="shadow-none">
+              <CardHeader>
+                <CardTitle>Database connection unavailable</CardTitle>
+                <CardDescription>
+                  The app couldn’t connect to the database. Check <code className="font-mono">DATABASE_URL</code>.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-muted-foreground">
+                  If you haven’t initialized your local DB yet, run <code className="font-mono">npm run prisma:migrate</code>.
+                </div>
+              </CardContent>
+            </Card>
+          </MotionSection>
+        </div>
+      </SiteShell>
+    );
+  }
   const mappedThemes = themes.map((t) => ({
     slug: t.slug,
     name: t.name,

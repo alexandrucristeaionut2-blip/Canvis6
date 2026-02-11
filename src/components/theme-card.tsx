@@ -34,10 +34,10 @@ export function ThemeCard({
     >
       <Link
         href={target}
-        className="block overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow group-hover:shadow-glow"
+        className="flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow group-hover:shadow-glow"
         aria-label={`View theme ${theme.name}`}
       >
-        <div className="relative aspect-[1414/2000] bg-muted">
+        <div className="relative aspect-[1414/2000] overflow-hidden bg-muted">
           <MockupImage
             src={theme.mockupImage}
             fallbackSrc={theme.heroImage ?? "/placeholders/gallery.svg"}
@@ -50,21 +50,21 @@ export function ThemeCard({
             <Badge variant="muted">Preview mockup</Badge>
           </div>
         </div>
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="font-display text-lg tracking-tight">{theme.name}</div>
-              <div className="mt-1 text-sm text-muted-foreground">{theme.description}</div>
+        <div className="flex flex-1 flex-col gap-4 p-5">
+          <div className="min-h-[76px]">
+            <div className="truncate font-display text-lg tracking-tight">{theme.name}</div>
+            <div className="mt-1 max-h-[2.75rem] overflow-hidden text-sm text-muted-foreground">
+              {theme.description}
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex min-h-[28px] flex-wrap gap-2">
             {theme.tags.slice(0, 3).map((t) => (
               <Badge key={t} variant="muted">
                 {t}
               </Badge>
             ))}
           </div>
-          <div className="mt-4 text-sm font-medium text-primary">Creează cu tema asta →</div>
+          <div className="mt-auto text-sm font-medium text-primary">Creează cu tema asta →</div>
         </div>
       </Link>
     </motion.div>

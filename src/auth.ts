@@ -17,14 +17,13 @@ const credentialsSchema = z.object({
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   pages: {
     signIn: "/signin",
     verifyRequest: "/verify",
   },
   providers: [
     Email({
-      // Local-only MVP: we log the magic link to the server console.
       from: "Canvist <no-reply@canvist.local>",
       sendVerificationRequest({ identifier, url }) {
         console.log("\n[Canvist] Magic link sign-in");
@@ -45,7 +44,7 @@ export const authOptions: NextAuthOptions = {
 
         const email = parsed.data.email.toLowerCase().trim();
 
-        // Basic in-memory rate limit (local MVP).
+        // Rate limit activat
         const ip = req?.headers?.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
         const rl = rateLimitLogin({
           key: `${ip}:${email}`,
@@ -70,9 +69,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    session({ session, user }) {
-      if (session.user && user?.id) {
-        session.user.id = user.id;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.id) {
+        // @ts-ignore
+        session.user.id = token.id as string;
       }
       return session;
     },

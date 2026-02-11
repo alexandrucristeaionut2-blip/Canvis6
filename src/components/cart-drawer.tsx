@@ -92,24 +92,19 @@ function CartDrawerMounted() {
                   <div key={i.id} className="flex gap-4 rounded-2xl border bg-card p-4">
                     <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl border bg-muted">
                       <MockupImage
-                        src={i.mockupImage}
+                        src={i.uploads?.[0] ? `/api/files/${i.uploads[0].filePath}` : i.mockupImage}
                         fallbackSrc="/placeholders/gallery.svg"
-                        alt={`Mockup — ${i.themeName}`}
+                        alt={`Print — ${i.themeName}`}
                         sizes="112px"
-                        className="object-cover"
+                        className="h-full w-full object-cover"
                       />
-                      <div className="pointer-events-none absolute left-2 top-2">
-                        <Badge variant="muted">Preview</Badge>
-                      </div>
+                      {/* Am eliminat badge-ul Preview ca sa fie imaginea curata */}
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <div className="truncate font-medium">{i.themeName}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            {formatSize(i.size)} • {formatFrameColor(i.frameColor)} • {formatFrameModel(i.frameModel)} • Glossy
-                          </div>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button
@@ -148,6 +143,10 @@ function CartDrawerMounted() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
+                      </div>
+
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {formatSize(i.size)} • {formatFrameColor(i.frameColor)} • {formatFrameModel(i.frameModel)} • Glossy
                       </div>
 
                       <div className="mt-3 flex items-center justify-between">

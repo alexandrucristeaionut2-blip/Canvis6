@@ -348,21 +348,84 @@ export function CreateWizard({
 
     setUploading(true);
     try {
-      const form = new FormData();
-      for (const f of files) form.append("files", f);
-
-      const res = await fetch(
-        `/api/orders/${encodeURIComponent(ids.orderPublicId)}/items/${encodeURIComponent(ids.itemPublicId)}/uploads/customer`,
+      // Preferred: presigned cloud uploads (S3-compatible). Falls back to legacy local upload.
+      const signRes = await fetch(
+        `/api/orders/${encodeURIComponent(ids.orderPublicId)}/items/${encodeURIComponent(ids.itemPublicId)}/uploads/customer/sign`,
         {
           method: "POST",
-          body: form,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            files: files.map((f) => ({ originalName: f.name, mimeType: f.type, size: f.size })),
+          }),
         }
       );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(json?.error ?? "Upload failed");
 
-      toast.success("Photos uploaded (local)");
-      await refreshUploadsFor(ids.orderPublicId, ids.itemPublicId);
+      const signJson = (await signRes.json().catch(() => null)) as
+        | {
+            configured?: boolean;
+            uploads?: Array<{ key: string; uploadUrl: string; originalName: string; mimeType: string; size: number }>;
+            error?: string;
+          }
+        | null;
+
+      if (signRes.ok && signJson?.configured === false) {
+        // Legacy local upload (dev fallback)
+        const form = new FormData();
+        for (const f of files) form.append("files", f);
+
+        const res = await fetch(
+          `/api/orders/${encodeURIComponent(ids.orderPublicId)}/items/${encodeURIComponent(ids.itemPublicId)}/uploads/customer`,
+          {
+            method: "POST",
+            body: form,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(json?.error ?? "Upload failed");
+
+        toast.success("Photos uploaded");
+        await refreshUploadsFor(ids.orderPublicId, ids.itemPublicId);
+      } else if (signRes.ok) {
+        const signed = signJson?.uploads ?? [];
+        if (signed.length !== files.length) throw new Error("Failed to sign uploads");
+
+        // Upload each file directly to storage.
+        await Promise.all(
+          signed.map(async (s, idx) => {
+            const file = files[idx];
+            const putRes = await fetch(s.uploadUrl, {
+              method: "PUT",
+              headers: { "content-type": s.mimeType },
+              body: file,
+            });
+            if (!putRes.ok) throw new Error(`Upload failed for ${s.originalName}`);
+          })
+        );
+
+        // Confirm + record in DB.
+        const confirmRes = await fetch(
+          `/api/orders/${encodeURIComponent(ids.orderPublicId)}/items/${encodeURIComponent(ids.itemPublicId)}/uploads/customer/confirm`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              uploads: signed.map((s) => ({
+                key: s.key,
+                originalName: s.originalName,
+                mimeType: s.mimeType,
+                size: s.size,
+              })),
+            }),
+          }
+        );
+        const confirmJson = await confirmRes.json().catch(() => null);
+        if (!confirmRes.ok) throw new Error(confirmJson?.error ?? "Upload confirm failed");
+
+        toast.success("Photos uploaded");
+        await refreshUploadsFor(ids.orderPublicId, ids.itemPublicId);
+      } else {
+        throw new Error(signJson?.error ?? "Upload failed");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {

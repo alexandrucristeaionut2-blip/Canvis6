@@ -10,6 +10,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { addAddressAction, setDefaultAddressAction } from "@/app/account/addresses/actions";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Addresses — Canvist" };
 
 export default async function AddressesPage() {

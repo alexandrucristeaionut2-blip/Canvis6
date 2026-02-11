@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth/password";
+import { normalizeEmail } from "@/lib/auth/normalize";
 
 const schema = z.object({
   name: z.string().min(1).max(80).optional().or(z.literal("")),
@@ -18,7 +19,7 @@ type State = { error?: string };
 export async function signUpAction(_: State, formData: FormData): Promise<State> {
   const raw = {
     name: String(formData.get("name") ?? "").trim(),
-    email: String(formData.get("email") ?? "").toLowerCase().trim(),
+    email: normalizeEmail(String(formData.get("email") ?? "")),
     password: String(formData.get("password") ?? ""),
     next: String(formData.get("next") ?? "").trim() || undefined,
   };

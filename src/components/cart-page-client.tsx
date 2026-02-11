@@ -4,12 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2, Plus, Minus, Pencil, Copy } from "lucide-react";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { MockupImage } from "@/components/mockup-image";
 
 import { useCartStore } from "@/store/cart-store";
 import { COUNTRIES, shippingForCountry } from "@/lib/shipping";
@@ -26,6 +26,75 @@ import {
   type SizeValue,
 } from "@/lib/product";
 import { formatMoneyRonBani } from "@/lib/currency";
+
+function CartItemThumbnail({
+  themeMockupUrl,
+  userImageUrl,
+  themeName,
+  priority,
+}: {
+  themeMockupUrl: string;
+  userImageUrl: string | null;
+  themeName: string;
+  priority?: boolean;
+}) {
+  return (
+    <div className="relative h-[120px] w-[180px] shrink-0 overflow-hidden rounded-2xl border border-black/10 bg-white outline outline-2 outline-red-500">
+      <span className="pointer-events-none absolute bottom-1 right-1 z-50 rounded bg-black/70 px-1 py-[1px] text-[10px] text-white">
+        v2
+      </span>
+
+      <Image
+        src={themeMockupUrl}
+        alt={`Room mockup — ${themeName}`}
+        fill
+        priority={priority}
+        sizes="180px"
+        className="object-cover"
+      />
+
+      {userImageUrl ? (
+        <div className="absolute left-[22%] top-[18%] right-[22%] bottom-[22%] z-20 overflow-hidden rounded-[6px] bg-white shadow-sm">
+          <Image
+            src={userImageUrl}
+            alt={`User photo — ${themeName}`}
+            fill
+            sizes="120px"
+            className="object-contain"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function firstNonEmptyString(values: Array<string | null | undefined>): string | null {
+  for (const v of values) {
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return null;
+}
+
+function getUserImageUrl(item: unknown): string | null {
+  const i = item as {
+    uploads?: Array<{ secureUrl?: string; url?: string; filePath?: string }>;
+    assets?: Array<{ secureUrl?: string }>;
+    imageUrl?: string;
+    previewUrl?: string;
+  };
+
+  const upload = i.uploads?.[0];
+  const fromUpload = firstNonEmptyString([upload?.secureUrl, upload?.url]);
+  if (fromUpload) return fromUpload;
+
+  const filePath = firstNonEmptyString([upload?.filePath]);
+  if (filePath) return `/api/files/${filePath}`;
+
+  const fromAssets = firstNonEmptyString([i.assets?.[0]?.secureUrl]);
+  if (fromAssets) return fromAssets;
+
+  return firstNonEmptyString([i.previewUrl, i.imageUrl]);
+}
 
 export function CartPageClient() {
   const router = useRouter();
@@ -95,24 +164,23 @@ export function CartPageClient() {
         {items.map((i, idx) => {
           const unit = getBasePriceRonBani(i.size);
           const line = unit * i.quantity;
+          const userImageUrl = getUserImageUrl(i);
+          const baseMockup = i.mockupImage || "/placeholders/gallery.svg";
           return (
             <div key={i.id} className="rounded-2xl border bg-card p-5">
-              <div className="flex gap-4">
-                <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-2xl border bg-muted">
-                  <MockupImage
-                    src={i.mockupImage}
-                    fallbackSrc="/placeholders/gallery.svg"
-                    alt={`Mockup — ${i.themeName}`}
-                    priority={idx === 0}
-                    sizes="144px"
+              <div className="grid gap-4 md:grid-cols-[144px_1fr]">
+                <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-xl border bg-muted">
+                  <Image
+                    src={i.uploads?.[0]?.filePath ? `/api/files/${i.uploads[0].filePath}` : (i.mockupImage || "/placeholders/gallery.svg")}
+                    alt={i.themeName}
+                    fill
                     className="object-cover"
+                    sizes="144px"
+                    priority={idx === 0}
                   />
-                  <div className="pointer-events-none absolute left-3 top-3">
-                    <Badge variant="muted">Preview mockup</Badge>
-                  </div>
                 </div>
 
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate font-display text-lg tracking-tight">{i.themeName}</div>
@@ -134,14 +202,14 @@ export function CartPageClient() {
                     </Button>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="space-y-2">
                       <div className="text-xs font-medium text-muted-foreground">Size</div>
                       <Select
                         value={i.size}
                         onValueChange={(v) => updateItem(i.id, { size: v as SizeValue })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -160,7 +228,7 @@ export function CartPageClient() {
                         value={i.frameColor}
                         onValueChange={(v) => updateItem(i.id, { frameColor: v as FrameColorValue })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -179,7 +247,7 @@ export function CartPageClient() {
                         value={i.frameModel}
                         onValueChange={(v) => updateItem(i.id, { frameModel: v as FrameModelValue })}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -193,7 +261,7 @@ export function CartPageClient() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
@@ -221,26 +289,26 @@ export function CartPageClient() {
                       <div className="text-sm font-medium">{formatMoneyRonBani(line)}</div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push(`/create?editCartItem=${encodeURIComponent(i.id)}`)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" /> Edit in wizard
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      duplicateItem(i.id);
-                      toast.success("Duplicated");
-                    }}
-                  >
-                    <Copy className="mr-2 h-4 w-4" /> Duplicate
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => router.push(`/create?editCartItem=${encodeURIComponent(i.id)}`)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" /> Edit in wizard
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        duplicateItem(i.id);
+                        toast.success("Duplicated");
+                      }}
+                    >
+                      <Copy className="mr-2 h-4 w-4" /> Duplicate
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

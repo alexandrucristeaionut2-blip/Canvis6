@@ -4,6 +4,8 @@ import { ThemeGrid } from "@/components/theme-grid";
 import { prisma } from "@/lib/prisma";
 import { parseTags } from "@/lib/theme";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Themes — Canvist",
 };

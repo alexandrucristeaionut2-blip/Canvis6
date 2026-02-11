@@ -15,6 +15,15 @@ type AdminItem = {
   previewCount: number;
 };
 
+type AdminCustomerUpload = {
+  id: string;
+  originalName: string;
+  mimeType: string | null;
+  size: number | null;
+  createdAt: string;
+  url: string | null;
+};
+
 type AdminOrder = {
   publicId: string;
   status: string;
@@ -24,6 +33,25 @@ type AdminOrder = {
 
 export function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) {
   const [busyKey, setBusyKey] = React.useState<string | null>(null);
+  const [customerUploads, setCustomerUploads] = React.useState<Record<string, AdminCustomerUpload[]>>({});
+  const [loadingUploadsKey, setLoadingUploadsKey] = React.useState<string | null>(null);
+
+  async function loadCustomerUploads(orderPublicId: string, itemPublicId: string) {
+    const key = `${orderPublicId}:${itemPublicId}`;
+    setLoadingUploadsKey(key);
+    try {
+      const res = await fetch(
+        `/api/admin/orders/${encodeURIComponent(orderPublicId)}/items/${encodeURIComponent(itemPublicId)}/uploads/customer`
+      );
+      const json = (await res.json().catch(() => null)) as { uploads?: AdminCustomerUpload[]; error?: string } | null;
+      if (!res.ok) throw new Error(json?.error ?? "Failed to load uploads");
+      setCustomerUploads((prev) => ({ ...prev, [key]: json?.uploads ?? [] }));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load uploads");
+    } finally {
+      setLoadingUploadsKey(null);
+    }
+  }
 
   async function uploadPreview(orderPublicId: string, itemPublicId: string, files: FileList) {
     const key = `${orderPublicId}:${itemPublicId}`;
@@ -73,6 +101,8 @@ export function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) {
             {o.items.map((it) => {
               const key = `${o.publicId}:${it.publicItemId}`;
               const busy = busyKey === key;
+              const uploads = customerUploads[key];
+              const loadingUploads = loadingUploadsKey === key;
               return (
                 <div key={it.publicItemId} className="rounded-2xl border bg-background p-4" data-testid={`admin-item-${it.publicItemId}`}> 
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -83,6 +113,9 @@ export function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) {
                     <div className="flex items-center gap-2">
                       <Badge variant="muted">{it.status}</Badge>
                       <Badge variant={it.previewCount > 0 ? "premium" : "muted"}>{it.previewCount} preview</Badge>
+                      <Badge variant={uploads && uploads.length > 0 ? "premium" : "muted"}>
+                        {uploads ? `${uploads.length} photos` : "photos"}
+                      </Badge>
                       {it.revisionUsed ? <Badge variant="muted">revision used</Badge> : null}
                     </div>
                   </div>
@@ -103,6 +136,70 @@ export function AdminOrdersClient({ orders }: { orders: AdminOrder[] }) {
                       data-testid={`admin-upload-${it.publicItemId}`}
                     />
                     <div className="text-xs text-muted-foreground">Uploading a preview sets the item to PREVIEW_READY.</div>
+                  </div>
+
+                  <div className="mt-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={loadingUploads}
+                        onClick={() => void loadCustomerUploads(o.publicId, it.publicItemId)}
+                        data-testid={`admin-load-customer-${it.publicItemId}`}
+                      >
+                        {loadingUploads ? "Loading…" : "Load customer photos"}
+                      </Button>
+                      <div className="text-xs text-muted-foreground">Signed links expire in ~10 minutes.</div>
+                    </div>
+
+                    {uploads && uploads.length ? (
+                      <div className="mt-3 grid gap-2">
+                        {uploads.map((u) => (
+                          <div key={u.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-card p-3">
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-medium">{u.originalName}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {u.size ? `${Math.round(u.size / 1024)} KB` : ""}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={!u.url}
+                                onClick={() => {
+                                  if (!u.url) return;
+                                  window.open(u.url, "_blank", "noopener,noreferrer");
+                                }}
+                              >
+                                Download
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={!u.url}
+                                onClick={async () => {
+                                  if (!u.url) return;
+                                  try {
+                                    await navigator.clipboard.writeText(u.url);
+                                    toast.success("Secure link copied");
+                                  } catch {
+                                    toast.error("Failed to copy");
+                                  }
+                                }}
+                              >
+                                Copy secure link
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : uploads ? (
+                      <div className="mt-3 text-sm text-muted-foreground">No customer photos yet.</div>
+                    ) : null}
                   </div>
                 </div>
               );

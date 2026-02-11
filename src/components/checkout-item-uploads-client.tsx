@@ -96,6 +96,11 @@ export function CheckoutItemUploadsClient({
 
   const allReady = counts.every((c) => c.count >= 2);
 
+  const itemsForPay = items.map((it) => ({
+    itemPublicId: it.publicItemId,
+    uploads: (uploadsByItem[it.publicItemId] ?? []).map((u) => ({ filePath: u.filePath, originalName: u.originalName })),
+  }));
+
   return (
     <div className="space-y-5">
       <div className="rounded-2xl border bg-muted p-4 text-sm">
@@ -169,7 +174,7 @@ export function CheckoutItemUploadsClient({
         })}
       </div>
 
-      <CheckoutPayButton publicId={orderPublicId} disabled={!allReady} clearCartOnSuccess={fromCart} />
+      <CheckoutPayButton publicId={orderPublicId} disabled={!allReady} clearCartOnSuccess={fromCart} items={itemsForPay} />
       {!allReady ? <div className="text-xs text-muted-foreground">Add photos for every item to continue.</div> : null}
     </div>
   );

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require-user";
 import { ChangePasswordForm } from "@/components/auth/forms/change-password-form";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Security — Canvist" };
 
 export default async function SecurityPage() {

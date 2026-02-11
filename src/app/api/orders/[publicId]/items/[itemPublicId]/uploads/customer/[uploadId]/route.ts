@@ -3,6 +3,10 @@ import fs from "fs/promises";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { safeJoinUnderUploads } from "@/lib/upload";
+import { deleteObject, isS3Configured } from "@/lib/storage/s3";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function DELETE(
   _req: Request,
@@ -28,16 +32,20 @@ export async function DELETE(
 
   const upload = await prisma.upload.findFirst({
     where: { id: uploadId, orderItemId: item.id, type: "CUSTOMER_PHOTO" },
-    select: { id: true, filePath: true },
+    select: { id: true, filePath: true, key: true },
   });
 
   if (!upload) return NextResponse.json({ error: "Upload not found" }, { status: 404 });
 
-  try {
-    const abs = safeJoinUnderUploads(upload.filePath);
-    await fs.unlink(abs);
-  } catch {
-    // ignore
+  if (upload.key && isS3Configured()) {
+    await deleteObject({ key: upload.key }).catch(() => null);
+  } else {
+    try {
+      const abs = safeJoinUnderUploads(upload.filePath);
+      await fs.unlink(abs);
+    } catch {
+      // ignore
+    }
   }
 
   await prisma.upload.delete({ where: { id: upload.id } });

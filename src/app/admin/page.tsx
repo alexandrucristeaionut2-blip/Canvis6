@@ -7,6 +7,8 @@ import { MotionSection } from "@/components/motion-section";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AdminOrdersClient } from "@/components/admin/admin-orders-client";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = { title: "Admin — Canvist" };
 
 export default async function AdminPage() {
